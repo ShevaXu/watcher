@@ -38,6 +38,7 @@ const (
 	Rename
 	Chmod
 	Move
+	Finish
 )
 
 var ops = map[Op]string{
@@ -47,6 +48,7 @@ var ops = map[Op]string{
 	Rename: "RENAME",
 	Chmod:  "CHMOD",
 	Move:   "MOVE",
+	Finish: "FINISH",
 }
 
 // String prints the string version of the Op consts
@@ -91,6 +93,7 @@ type Watcher struct {
 	running      bool
 	names        map[string]bool        // bool for recursive or not.
 	files        map[string]os.FileInfo // map of files.
+	newFiles     map[string]os.FileInfo // map of newly created files.
 	ignored      map[string]struct{}    // ignored files or directories.
 	ops          map[Op]struct{}        // Op filtering.
 	ignoreHidden bool                   // ignore hidden files or not.
@@ -104,15 +107,16 @@ func New() *Watcher {
 	wg.Add(1)
 
 	return &Watcher{
-		Event:   make(chan Event),
-		Error:   make(chan error),
-		Closed:  make(chan struct{}),
-		close:   make(chan struct{}),
-		mu:      new(sync.Mutex),
-		wg:      &wg,
-		files:   make(map[string]os.FileInfo),
-		ignored: make(map[string]struct{}),
-		names:   make(map[string]bool),
+		Event:    make(chan Event),
+		Error:    make(chan error),
+		Closed:   make(chan struct{}),
+		close:    make(chan struct{}),
+		mu:       new(sync.Mutex),
+		wg:       &wg,
+		files:    make(map[string]os.FileInfo),
+		newFiles: make(map[string]os.FileInfo),
+		ignored:  make(map[string]struct{}),
+		names:    make(map[string]bool),
 	}
 }
 
@@ -555,6 +559,17 @@ func (w *Watcher) pollEvents(files map[string]os.FileInfo, evt chan Event,
 			case evt <- Event{Chmod, path, info}:
 			}
 		}
+		// Check for finishes.
+		if oldInfo.ModTime() == info.ModTime() && oldInfo.Size() == info.Size() {
+			if _, isNew := w.newFiles[path]; isNew {
+				delete(w.newFiles, path)
+				select {
+				case <-cancel:
+					return
+				case evt <- Event{Finish, path, info}:
+				}
+			}
+		}
 	}
 
 	// Check for renames and moves.
@@ -586,6 +601,7 @@ func (w *Watcher) pollEvents(files map[string]os.FileInfo, evt chan Event,
 
 	// Send all the remaining create and remove events.
 	for path, info := range creates {
+		w.newFiles[path] = info
 		select {
 		case <-cancel:
 			return
