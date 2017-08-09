@@ -14,6 +14,10 @@ Events contain the `os.FileInfo` of the file or directory that the event is base
 [Contributing](#contributing)  
 [Watcher Command](#command)  
 
+# Fork Update
+
+Add `FINISH` event, which fires when a newly created file stay untouched for a polling cycle (thus 2-cycles delay at least, please set the polling interval carefully if this event is needed). Use cases include watching some generated media files and downloadings. Issue to the original repo [here](https://github.com/radovskyb/watcher/issues/27).
+
 # Update
 Event.Path for Rename and Move events is now returned in the format of `fromPath -> toPath`
 
