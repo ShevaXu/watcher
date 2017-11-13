@@ -497,6 +497,36 @@ func TestListFiles(t *testing.T) {
 	}
 }
 
+func TestListFilesByOs(t *testing.T) {
+	testDir, teardown := setup(t)
+	defer teardown()
+
+	w := New()
+	w.UseSysCmd(true)
+	w.AddRecursive(testDir)
+
+	fileList := w.retrieveFileList()
+	if fileList == nil {
+		t.Error("expected file list to not be empty")
+	}
+
+	// Make sure fInfoTest contains the correct os.FileInfo names.
+	fname := filepath.Join(testDir, "file.txt")
+	if fileList[fname].Name() != "file.txt" {
+		t.Errorf("expected fileList[%s].Name() to be file.txt, got %s",
+			fname, fileList[fname].Name())
+	}
+
+	// Try to call list on a file that's not a directory.
+	fileList, err := w.list(fname)
+	if err != nil {
+		t.Error("expected err to be nil")
+	}
+	if len(fileList) != 1 {
+		t.Errorf("expected len of file list to be 1, got %d", len(fileList))
+	}
+}
+
 func TestTriggerEvent(t *testing.T) {
 	w := New()
 
@@ -856,6 +886,25 @@ func BenchmarkListFiles(b *testing.B) {
 	defer teardown()
 
 	w := New()
+	err := w.AddRecursive(testDir)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for i := 0; i < b.N; i++ {
+		fileList := w.retrieveFileList()
+		if fileList == nil {
+			b.Fatal("expected file list to not be empty")
+		}
+	}
+}
+
+func BenchmarkListFilesByOs(b *testing.B) {
+	testDir, teardown := setup(b)
+	defer teardown()
+
+	w := New()
+	w.UseSysCmd(true)
 	err := w.AddRecursive(testDir)
 	if err != nil {
 		b.Fatal(err)

@@ -97,6 +97,7 @@ type Watcher struct {
 	ignored      map[string]struct{}    // ignored files or directories.
 	ops          map[Op]struct{}        // Op filtering.
 	ignoreHidden bool                   // ignore hidden files or not.
+	useSysCmd bool // use system command instead of Golang stdlib
 	maxEvents    int                    // max sent events per cycle
 }
 
@@ -134,6 +135,14 @@ func (w *Watcher) SetMaxEvents(delta int) {
 func (w *Watcher) IgnoreHiddenFiles(ignore bool) {
 	w.mu.Lock()
 	w.ignoreHidden = ignore
+	w.mu.Unlock()
+}
+
+// useSysCmd sets the watcher to use system command for listing &
+// walking directory.
+func (w *Watcher) UseSysCmd(use bool) {
+	w.mu.Lock()
+	w.useSysCmd = use
 	w.mu.Unlock()
 }
 
@@ -197,10 +206,16 @@ func (w *Watcher) list(name string) (map[string]os.FileInfo, error) {
 	}
 
 	// It's a directory.
-	fInfoList, err := ioutil.ReadDir(name)
+	var fInfoList []os.FileInfo
+	if w.useSysCmd {
+		fInfoList, err = readDir(name)
+	} else {
+		fInfoList, err = ioutil.ReadDir(name)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	// Add all of the files in the directory to the file list as long
 	// as they aren't on the ignored list or are hidden files if ignoreHidden
 	// is set to true.
@@ -242,7 +257,7 @@ func (w *Watcher) AddRecursive(name string) (err error) {
 func (w *Watcher) listRecursive(name string) (map[string]os.FileInfo, error) {
 	fileList := make(map[string]os.FileInfo)
 
-	return fileList, filepath.Walk(name, func(path string, info os.FileInfo, err error) error {
+	walkFn := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -258,7 +273,19 @@ func (w *Watcher) listRecursive(name string) (map[string]os.FileInfo, error) {
 		// Add the path and it's info to the file list.
 		fileList[path] = info
 		return nil
-	})
+	}
+
+	if w.useSysCmd {
+		return fileList, Walk(name, walkFn)
+	} else {
+		return fileList, filepath.Walk(name, walkFn)
+	}
+}
+
+func (w *Watcher) listRecursiveByOs(name string) (map[string]os.FileInfo, error) {
+	fileList := make(map[string]os.FileInfo)
+
+	return fileList, nil
 }
 
 // Remove removes either a single file or directory from the file's list.
