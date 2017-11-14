@@ -16,9 +16,21 @@ Events contain the `os.FileInfo` of the file or directory that the event is base
 
 # Fork Update
 
-Add `FINISH` event, which fires when a newly created file stay untouched for a polling cycle (thus 2-cycles delay at least, please set the polling interval carefully if this event is needed). Use cases include watching some generated media files and downloadings. Issue to the original repo [here](https://github.com/radovskyb/watcher/issues/27).
+- Add `FINISH` event, which fires when a newly created file stay untouched for a polling cycle (thus 2-cycles delay at least, please set the polling interval carefully if this event is needed). Use cases include watching some generated media files and downloadings. Issue to the original repo [here](https://github.com/radovskyb/watcher/issues/27).
+- Add `ls` like `Cmd` as alternative to `filepath.Walk` to retrieve file list:
+    - `Walk` sorts the files and thus in-efficient (but determined);
+    - `Walk` misses some files for network-mounted filesystems (e.g., [CIFS](https://en.wikipedia.org/wiki/Server_Message_Block);
+    - So does `ioutil.ReadDir`.
+
+## `ls` Benchmark
+
+```sh
+BenchmarkListFiles-8         	   20000	     70145 ns/op
+BenchmarkListFilesByOs-8     	     200	   7893265 ns/op
+```
 
 # Update
+
 Event.Path for Rename and Move events is now returned in the format of `fromPath -> toPath`
 
 #### Chmod event is not supported under windows.
