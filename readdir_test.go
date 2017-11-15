@@ -1,8 +1,8 @@
 package watcher
 
 import (
-	"testing"
 	"io/ioutil"
+	"testing"
 
 	"github.com/ShevaXu/web-utils/assert"
 )

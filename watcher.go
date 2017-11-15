@@ -97,7 +97,7 @@ type Watcher struct {
 	ignored      map[string]struct{}    // ignored files or directories.
 	ops          map[Op]struct{}        // Op filtering.
 	ignoreHidden bool                   // ignore hidden files or not.
-	useSysCmd bool // use system command instead of Golang stdlib
+	useSysCmd    bool                   // use system command instead of Golang stdlib
 	maxEvents    int                    // max sent events per cycle
 }
 

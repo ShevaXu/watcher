@@ -3,11 +3,12 @@ package watcher
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"path/filepath"
-	//"fmt"
+	"strings"
 )
 
+// ls lists file names of the directory;
+// it's behaviour is the same as calling `ls`.
 func ls(name string) ([]string, error) {
 	// TODO: cross platform
 	path, err := exec.LookPath("ls")
@@ -30,6 +31,9 @@ func ls(name string) ([]string, error) {
 	}
 }
 
+// la lists all files of the directory including
+// hidden files and self/parent directory;
+// it's behaviour is the same as calling `ls -a`.
 func la(name string) ([]string, error) {
 	// TODO: cross platform
 	path, err := exec.LookPath("ls")
@@ -52,6 +56,10 @@ func la(name string) ([]string, error) {
 	}
 }
 
+// readDir mimic the behaviour of ioutil.ReadDir
+// (reads the directory named by dirname and returns
+// a list of directory entries sorted by filename),
+// but use `ls -a` and string parsing internally.
 func readDir(dirname string) ([]os.FileInfo, error) {
 	f, err := os.Open(dirname)
 	if err != nil {
@@ -97,14 +105,12 @@ func walk(path string, info os.FileInfo, walkFn filepath.WalkFunc) error {
 		return nil
 	}
 
-	//fmt.Println("Into dir", path)
 	// monkey-patching the read directory function
 	// names, err := readDirNames(path)
 	names, err := la(path)
 	if err != nil {
 		return walkFn(path, info, err)
 	}
-	//fmt.Println("Got names", len(names))
 
 	for _, name := range names {
 		if name == "." || name == ".." {
