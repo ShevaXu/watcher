@@ -1,6 +1,6 @@
 # watcher
 
-[![Build Status](https://travis-ci.org/radovskyb/watcher.svg?branch=master)](https://travis-ci.org/radovskyb/watcher)
+[![Build Status](https://travis-ci.org/ShevaXu/watcher.svg?branch=master)](https://travis-ci.org/ShevaXu/watcher)
 
 `watcher` is a Go package for watching for files or directory changes (recursively or non recursively) without using filesystem events, which allows it to work cross platform consistently.
 
@@ -29,17 +29,17 @@ BenchmarkListFiles-8         	   20000	     70145 ns/op
 BenchmarkListFilesByOs-8     	     200	   7893265 ns/op
 ```
 
+## Installation
+
+```shell
+go get -u github.com/ShevaXu/watcher/...
+```
+
 # Update
 
 Event.Path for Rename and Move events is now returned in the format of `fromPath -> toPath`
 
 #### Chmod event is not supported under windows.
-
-# Installation
-
-```shell
-go get -u github.com/radovskyb/watcher/...
-```
 
 # Features
 
