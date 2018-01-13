@@ -78,7 +78,8 @@ func readDir(dirname string) ([]os.FileInfo, error) {
 			// ioutil.ReadDir ignores these
 			continue
 		}
-		info, err := os.Lstat(name)
+		filename := filepath.Join(dirname, name)
+		info, err := os.Lstat(filename)
 		if err != nil {
 			return list, err
 		}
